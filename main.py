@@ -6,7 +6,11 @@ r = requests.get(f'https://www.dota2protracker.com/player/{username}')
 soup = b(r.text, 'html.parser')
 kk = soup.find_all(class_='played-box')
 games = soup.find_all(class_='yellow')
-games_last_8_days = str(games[0])[21:23].rstrip('<')
+try:
+    games_last_8_days = str(games[0])[21:23].rstrip('<')
+except IndexError:
+    print('Нет профиля')
+    games_last_8_days = 'Ошибка: нет профиля на Dota2protracker'
 well = []
 for el in kk:
     well.append(str(el).strip('\n').split(' '))
