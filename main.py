@@ -1,49 +1,114 @@
 import requests
 from bs4 import BeautifulSoup as b
 class ProTracker:
-    def __init__(self, username):
-        r = requests.get(f'https://www.dota2protracker.com/player/{username}')
-        soup = b(r.text, 'html.parser')
-        self.kk = soup.find_all(class_='played-box')
-        self.games = soup.find_all(class_='yellow')
+    def __init__(self, nickname):
+        r = requests.get(f'https://www.dota2protracker.com/player/{nickname}') # создание
+        # ссылки на
+        soup = b(r.text, 'html.parser') # вся инфа с профиля
+        self.replay = soup.find_all(class_='copy-id')[:3]
+        self.kk = soup.find_all(class_='played-box') # по классам беру инфу с сайта(псоледние игры,
+        # сыгранные за 8 дней)
+        games = soup.find_all(class_='yellow') # сколько игр было сырано за последние 8 дней
+        self.games_last_8_days = str(games[0])[21:23].rstrip('<') # сколько игр было сыгранно за
+        # последние 8 дней(преобразованное в одно число)
+        self.las = soup.find_all(class_='row-0') # пепрвая игра, со всеми данными, персонаж, роль,
+        # итог игры, тиммейты, оппоненты, айтембилд
+        self.priveou = soup.find_all(class_='row-1') # вторая игра, со всеми данными, персонаж,
+        # роль, итог игры, тиммейты, оппоненты, айтембилд
+        self.prepreviou = soup.find_all(class_='row-2') # третья игра, со всеми данными, персонаж,
+        # роль, итог игры, тиммейты, оппоненты, айтембилд
+        self.mmr = soup.find_all(class_='td-mmr')[:3] # ммр в этих трех играх
     def lastgames(self):
-        try:
-            games_last_8_days = str(self.games[0])[21:23].rstrip('<')
-        except IndexError:
-            print('Нет профиля')
-            games_last_8_days = 'Ошибка: нет профиля на Dota2protracker'
         well = []
         for el in self.kk:
-            well.append(str(el).strip('\n').split(' '))
+            well.append(str(el).strip('\n').split(' '))  # все данные из вкладки о последних играх
         heroes = []
         hero = []
         winrate = []
         for i in well:
             for el in i:
                 if 'class="green"' in str(el):
-                    winrate.append(el[14:19].rstrip('%'))
+                    winrate.append(el[14:19].rstrip('%'))  # винрейт
                 elif 'class="yellow"' in str(el):
-                    winrate.append(el[15:20].rstrip('%'))
+                    winrate.append(el[15:20].rstrip('%'))  # винрейт
                 elif 'class="red"' in str(el):
-                    winrate.append(el[12:17].rstrip('<').rstrip('%'))
+                    winrate.append(el[12:17].rstrip('<').rstrip('%'))  # винрейт
 
         for i in well:
             for el in i:
                 if 'data=' in el:
-                    heroes.append(el[6:])
+                    heroes.append(el[6:])  # ввсе герое, на которых игрок играл за последние 8 дней
 
         for el in heroes:
             a = str(el).find('"')
             if a != -1:
-                hero.append(el[:a])
+                hero.append(el[:a])  # отладка
             elif a == -1:
                 hero.append(el)
         all = []
-        print(winrate)
-        print(hero)
+        all.append(self.games_last_8_days)
         for i in range(len(hero)):
-            aa = f'{hero[i]}: {winrate[i]}%'
+            aa = f'{hero[i]}: {winrate[i]}%'  # преобразование списка в формате "Герой: винрейт"
             all.append(aa)
-        print(f'Last games per 8 days: ({games_last_8_days} games)')
-        for el in all:
-            print(el)
+        return all
+    def last3matches(self):
+        mmrs = []
+        replays = []
+        last = []
+        priveous = []
+        prepriveous = []
+        for el in self.replay:
+            replays.append(str(el)[25:35])
+        for el in self.mmr:
+            mmrs.append(str(el)[19:23]) # преобразовал ммр с список, нулевой индекс - последняя игра, индекс 2 - третья игра с конца
+        for el in self.las:
+            last.append(str(el).split('\n')) # данные с последней последней игры
+        for el in self.priveou:
+            priveous.append(str(el).split('\n')) # данные с предпоследней игры
+        for el in self.prepreviou:
+            prepriveous.append(str(el).split('\n')) # данные с предпредпоследней игры
+        last = (last[0][0].split('"'))[2:] # срез данных по последней игре, с нужными данными
+        priveous = (priveous[0][0].split('"'))[2:] # срез данных по предпоследней игре, с нужными
+    # данными
+        prepriveous = (prepriveous[0][0].split('"'))[2:] # срез данных по предпредпоследней игре,
+# с нужными данными
+        last_info = []
+        priveous_info = []
+        prepriveous_info = []
+        for i in range(1, 18, 2):
+            last_info.append(last[i])
+        for i in range(1, 18, 2):
+            priveous_info.append(priveous[i])
+        for i in range(1, 18, 2):
+            prepriveous_info.append(prepriveous[i])
+        print(f'----------------------------------------'
+              f"1st game played on the {last_info[0]} ({last_info[6]}) \n"
+              f'Replay: {replays[0]} \n'
+              f'Average mmr: {mmrs[0]} \n'
+              f'Item build(in order): {last_info[2].replace(",", ", ")} \n'
+              f"Player's team: {last_info[7]} \n"
+              f"Enemy Team: {last_info[4]} \n"
+              f"Famous people: {last_info[5]} \n"
+              f"Result: {'win' if int(priveous_info[8]) == 1 else 'lose'} \n"
+              f'----------------------------------------'
+              f"2nd game played on the {priveous_info[0]} ({priveous_info[6]}) \n"
+              f'Replay: {replays[1]} \n'
+              f'Average mmr: {mmrs[1]} \n'
+              f'Item build(in order): {priveous_info[2].replace(",", ", ")} \n'
+              f"Player's team: {priveous_info[7]} \n"
+              f"Enemy Team: {priveous_info[4]} \n"
+              f"Famous people: {priveous_info[5]} \n"
+              f"Result: {'win' if int(priveous_info[8]) == 1 else 'lose'} \n"
+              f'---------------------------------------- \n'
+              f"3rd game played on the {prepriveous_info[0]} ({prepriveous_info[6]}) \n"
+              f'Replay: {replays[2]} \n'
+              f'Average mmr: {mmrs[2]} \n'
+              f'Item build(in order): {prepriveous_info[2].replace(",", ", ")} \n'
+              f"Player's team: {prepriveous_info[7]} \n"
+              f"Enemy Team: {prepriveous_info[4]} \n"
+              f"Famous people: {prepriveous_info[5]}\n"
+              f"Result: {'win' if int(prepriveous_info[8]) == 1 else 'lose'} \n"
+              f'----------------------------------------')
+#a = ProTracker('bzm') Примеры
+#print('\n'.join(a.lastgames()))
+#a.last3matches()
