@@ -1,5 +1,8 @@
 import requests
 from bs4 import BeautifulSoup as b
+import telebot
+
+from telebot import types
 
 
 class ProTracker:
@@ -25,7 +28,7 @@ class ProTracker:
         self.mmr = soup.find_all(class_='td-mmr')[:3]  # ммр в этих трех играх
 
     def lastgames(self):
-        #games_last_8_days = str(self.games[0])[21:23].rstrip('<')
+        # games_last_8_days = str(self.games[0])[21:23].rstrip('<')
         well = []
         for el in self.kk:
             well.append(str(el).strip('\n').split(' '))  # все данные из вкладки о последних играх
@@ -53,11 +56,11 @@ class ProTracker:
             elif a == -1:
                 hero.append(el)
         all = []
-        #all.append(f'Всего игр за 8 дней: {games_last_8_days}')
+        # all.append(f'Всего игр за 8 дней: {games_last_8_days}')
         for i in range(len(hero)):
             aa = f'{hero[i]}: {winrate[i]}%'  # преобразование списка в формате "Герой: винрейт"
             all.append(aa)
-        return all
+        return '\n'.join(all)
 
     def last3matches(self):
         mmrs = []
@@ -118,6 +121,45 @@ class ProTracker:
               f"Famous people: {prepriveous_info[5]}\n"
               f"Result: {'win' if int(prepriveous_info[8]) == 1 else 'lose'} \n"
               f'----------------------------------------')
-# a = ProTracker('bzm')
-# print(a.lastgames())
-# a.last3matches()
+
+
+bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
+count = 0
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    bot.send_message(message.from_user.id, f"👋 Привет, {message.from_user.first_name}! Я твой бот "
+                                           f"по Dota 2", reply_markup=markup)
+    bot.send_message(message.from_user.id, 'Введите ваш ник в Dota 2 прежде чем начать.')
+
+
+@bot.message_handler(content_types=['text'])
+def get_text_messages(message):
+    if message.text == 'Ввести первый ник':
+        z = message.text
+        k = ProTracker(message.text)
+        print(message.text)
+        bot.send_message(message.from_user.id, f'Ваш ник: {z}')
+    if message.text == 'Поменять ник':
+        bot.send_message(message.from_user.id, 'Введите ник')
+        message.text = None
+        z = message.text
+        k = ProTracker(message.text)
+        bot.send_message(message.from_user.id, f'Ваш ник успешно изменен на '
+                                               f'{message.text}',
+                         parse_mode='Markdown')
+    elif message.text == 'Статистика последних игр за 8 дней':
+        print(k.lastgames())
+        bot.send_message(message.from_user.id, k.lastgames())
+
+    elif message.text == 'В разработке':
+        bot.send_message(message.from_user.id,
+                         'В разработке',
+                         parse_mode='Markdown')
+
+
+bot.polling(none_stop=True, interval=0)
+a = ProTracker('bzm')
+print(a.lastgames())
+a.last3matches()
