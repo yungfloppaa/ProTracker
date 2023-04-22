@@ -7,8 +7,8 @@ from telebot import types
 
 class ProTracker:
     def __init__(self, nickname):
-        print(f'https://www.dota2protracker.com/player/{nickname}')
-        r = requests.get(f'https://www.dota2protracker.com/player/{nickname}')  # создание
+        self.l = f'https://www.dota2protracker.com/player/{nickname}'
+        r = requests.get(self.l)  # создание
         # ссылки на
         soup = b(r.text, 'html.parser')  # вся инфа с профиля
         self.replay = soup.find_all(class_='copy-id')[:3]
@@ -127,22 +127,28 @@ bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
 a = None
 c = None
 
+
 @bot.message_handler(commands=['start'])
 def start(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     bot.send_message(message.from_user.id, f"👋 Привет, {message.from_user.first_name}! Я твой бот "
-                                           f"по Dota 2", reply_markup=markup)
+                                           f"по Dota 2")
     bot.send_message(message.from_user.id, 'Введите ник что бы начать')
 
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton('Статистика последних игр за 8 дней')
+    btn2 = types.KeyboardButton('Подробный разбор последних 3-х игр')
+    btn3 = types.KeyboardButton('Поменять ник (В разработке')
+    btn4 = types.KeyboardButton('Профиль на Dota2ProTracker')
+    markup.add(btn1, btn2, btn3, btn4)
     global a
     global c
     if a is None:
         a = message.text
         c = ProTracker(a)
-        bot.send_message(message.from_user.id, f'Ваш ник: {message.text}')
+        bot.send_message(message.from_user.id, f'Ваш ник: {message.text}', reply_markup=markup)
     if message.text == 'Поменять ник':
         bot.send_message(message.from_user.id, 'Введите ник')
         if message.text != a:
@@ -152,15 +158,17 @@ def get_text_messages(message):
                                                f' {message.text}',
                          parse_mode='Markdown')
     elif message.text == 'Статистика последних игр за 8 дней':
-        print(c.lastgames())
         bot.send_message(message.from_user.id, c.lastgames())
     elif message.text == 'Подробный разбор последних 3-х игр':
         bot.send_message(message.from_user.id, c.last3matches())
+    elif message.text == 'Профиль на Dota2ProTracker':
+        bot.send_message(message.from_user.id, c.l)
 
     elif message.text == 'В разработке':
         bot.send_message(message.from_user.id,
                          'В разработке',
                          parse_mode='Markdown')
+    bot.send_message(message.from_user.id, 'Что вы хотите узнать?')
 
 
 bot.polling(none_stop=True, interval=0)
