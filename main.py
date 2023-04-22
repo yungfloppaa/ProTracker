@@ -93,65 +93,66 @@ class ProTracker:
             priveous_info.append(priveous[i])
         for i in range(1, 18, 2):
             prepriveous_info.append(prepriveous[i])
-        print(f'----------------------------------------'
-              f"1st game played on the {last_info[0]} ({last_info[6]}) \n"
-              f'Replay: {replays[0]} \n'
-              f'Average mmr: {mmrs[0]} \n'
-              f'Item build(in order): {last_info[2].replace(",", ", ")} \n'
-              f"Player's team: {last_info[7]} \n"
-              f"Enemy Team: {last_info[4]} \n"
-              f"Famous people: {last_info[5]} \n"
-              f"Result: {'win' if int(priveous_info[8]) == 1 else 'lose'} \n"
-              f'----------------------------------------'
-              f"2nd game played on the {priveous_info[0]} ({priveous_info[6]}) \n"
-              f'Replay: {replays[1]} \n'
-              f'Average mmr: {mmrs[1]} \n'
-              f'Item build(in order): {priveous_info[2].replace(",", ", ")} \n'
-              f"Player's team: {priveous_info[7]} \n"
-              f"Enemy Team: {priveous_info[4]} \n"
-              f"Famous people: {priveous_info[5]} \n"
-              f"Result: {'win' if int(priveous_info[8]) == 1 else 'lose'} \n"
-              f'---------------------------------------- \n'
-              f"3rd game played on the {prepriveous_info[0]} ({prepriveous_info[6]}) \n"
-              f'Replay: {replays[2]} \n'
-              f'Average mmr: {mmrs[2]} \n'
-              f'Item build(in order): {prepriveous_info[2].replace(",", ", ")} \n'
-              f"Player's team: {prepriveous_info[7]} \n"
-              f"Enemy Team: {prepriveous_info[4]} \n"
-              f"Famous people: {prepriveous_info[5]}\n"
-              f"Result: {'win' if int(prepriveous_info[8]) == 1 else 'lose'} \n"
-              f'----------------------------------------')
+        return (f'---------------------------------------- \n'
+                f"1st game played on the {last_info[0]} ({last_info[6]}) \n"
+                f'Replay: {replays[0]} \n'
+                f'Average mmr: {mmrs[0]} \n'
+                f'Item build(in order): {last_info[2].replace(",", ", ")} \n'
+                f"Player's team: {last_info[7]} \n"
+                f"Enemy Team: {last_info[4]} \n"
+                f"Famous people: {last_info[5]} \n"
+                f"Result: {'win' if int(priveous_info[8]) == 1 else 'lose'} \n"
+                f'---------------------------------------- \n'
+                f"2nd game played on the {priveous_info[0]} ({priveous_info[6]}) \n"
+                f'Replay: {replays[1]} \n'
+                f'Average mmr: {mmrs[1]} \n'
+                f'Item build(in order): {priveous_info[2].replace(",", ", ")} \n'
+                f"Player's team: {priveous_info[7]} \n"
+                f"Enemy Team: {priveous_info[4]} \n"
+                f"Famous people: {priveous_info[5]} \n"
+                f"Result: {'win' if int(priveous_info[8]) == 1 else 'lose'} \n"
+                f'---------------------------------------- \n'
+                f"3rd game played on the {prepriveous_info[0]} ({prepriveous_info[6]}) \n"
+                f'Replay: {replays[2]} \n'
+                f'Average mmr: {mmrs[2]} \n'
+                f'Item build(in order): {prepriveous_info[2].replace(",", ", ")} \n'
+                f"Player's team: {prepriveous_info[7]} \n"
+                f"Enemy Team: {prepriveous_info[4]} \n"
+                f"Famous people: {prepriveous_info[5]}\n"
+                f"Result: {'win' if int(prepriveous_info[8]) == 1 else 'lose'} \n"
+                f'----------------------------------------')
 
 
 bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
-count = 0
+a = None
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     bot.send_message(message.from_user.id, f"👋 Привет, {message.from_user.first_name}! Я твой бот "
                                            f"по Dota 2", reply_markup=markup)
-    bot.send_message(message.from_user.id, 'Введите ваш ник в Dota 2 прежде чем начать.')
+    bot.send_message(message.from_user.id, 'Введите ник что бы начать')
 
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    if message.text == 'Ввести первый ник':
-        z = message.text
-        k = ProTracker(message.text)
-        print(message.text)
-        bot.send_message(message.from_user.id, f'Ваш ник: {z}')
+    global a
+    if a is None:
+        a = ProTracker(message.text)
+        bot.send_message(message.from_user.id, f'Ваш ник: {message.text}')
+        print(a.lastgames())
     if message.text == 'Поменять ник':
         bot.send_message(message.from_user.id, 'Введите ник')
-        message.text = None
-        z = message.text
-        k = ProTracker(message.text)
-        bot.send_message(message.from_user.id, f'Ваш ник успешно изменен на '
-                                               f'{message.text}',
+        a = ProTracker(message.text)
+        bot.send_message(message.from_user.id, f'Ваш ник успешно изменен на'
+                                               f' {message.text}',
                          parse_mode='Markdown')
     elif message.text == 'Статистика последних игр за 8 дней':
-        print(k.lastgames())
-        bot.send_message(message.from_user.id, k.lastgames())
+        print(a.lastgames())
+        bot.send_message(message.from_user.id, a.lastgames())
+    elif message.text == 'Подробный разбор последних 3-х игр':
+        bot.send_message(message.from_user.id, a.last3matches())
 
     elif message.text == 'В разработке':
         bot.send_message(message.from_user.id,
@@ -160,6 +161,6 @@ def get_text_messages(message):
 
 
 bot.polling(none_stop=True, interval=0)
-a = ProTracker('bzm')
-print(a.lastgames())
-a.last3matches()
+# a = ProTracker('bzm')
+# print(a.lastgames())
+# a.last3matches()
