@@ -130,8 +130,12 @@ c = None
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    global a
+    global c
+    a = None
+    c = None
     bot.send_message(message.from_user.id, f"👋 Привет, {message.from_user.first_name}! Я твой бот "
-                                           f"по Dota 2")
+                                           f"по Dota 2", reply_markup=types.ReplyKeyboardRemove())
     bot.send_message(message.from_user.id, 'Введите ник что бы начать')
 
 
