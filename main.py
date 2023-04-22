@@ -125,7 +125,7 @@ class ProTracker:
 
 bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
 a = None
-
+c = None
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -138,21 +138,24 @@ def start(message):
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     global a
+    global c
     if a is None:
-        a = ProTracker(message.text)
+        a = message.text
+        c = ProTracker(a)
         bot.send_message(message.from_user.id, f'Ваш ник: {message.text}')
-        print(a.lastgames())
     if message.text == 'Поменять ник':
         bot.send_message(message.from_user.id, 'Введите ник')
-        a = ProTracker(message.text)
+        if message.text != a:
+            a = message.text
+            c = ProTracker(a)
         bot.send_message(message.from_user.id, f'Ваш ник успешно изменен на'
                                                f' {message.text}',
                          parse_mode='Markdown')
     elif message.text == 'Статистика последних игр за 8 дней':
-        print(a.lastgames())
-        bot.send_message(message.from_user.id, a.lastgames())
+        print(c.lastgames())
+        bot.send_message(message.from_user.id, c.lastgames())
     elif message.text == 'Подробный разбор последних 3-х игр':
-        bot.send_message(message.from_user.id, a.last3matches())
+        bot.send_message(message.from_user.id, c.last3matches())
 
     elif message.text == 'В разработке':
         bot.send_message(message.from_user.id,
