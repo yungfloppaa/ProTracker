@@ -122,6 +122,30 @@ class ProTracker:
                 f"Result: {'win' if int(prepriveous_info[8]) == 1 else 'lose'} \n"
                 f'----------------------------------------')
 
+    def top_heroes(self):
+        r = requests.get('https://www.dota2protracker.com')
+        soup = b(r.text, 'html.parser')
+        results_all = str(soup.find_all(class_='td-hero-pic')[:3])
+        first = str(results_all).split('\n')[3].strip(' ')
+        second = str(results_all).split('\n')[8].strip(' ')
+        third = str(results_all).split('\n')[13].strip(' ')
+        games = str(soup.find_all(class_='perc-wr')[:6]).split(' ')
+        game = []
+        winrrate = []
+        for i in range(2, 15, 5):
+            if 'red' in games[i]:
+                winrrate.append(str(games[i][12:17]))
+            else:
+                winrrate.append(str(games[i][14:19]))
+        for i in range(4, 15, 5):
+            game.append(str(games[i][16:20]))
+
+        return (f'The Most Popular Heroes:\n'
+              f'{first} - {game[0]} ({winrrate[0]}) \n'
+              f'{second} - {game[1]} ({winrrate[1]}) \n'
+              f'{third} - {game[2]} ({winrrate[2]})')
+
+
 
 bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
 a = None
@@ -144,29 +168,35 @@ def get_text_messages(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton('Статистика последних игр за 8 дней')
     btn2 = types.KeyboardButton('Подробный разбор последних 3-х игр')
-    btn3 = types.KeyboardButton('Поменять ник (В разработке')
+    btn3 = types.KeyboardButton('Поменять ник (В разработке)')
     btn4 = types.KeyboardButton('Профиль на Dota2ProTracker')
-    markup.add(btn1, btn2, btn3, btn4)
+    btn5 = types.KeyboardButton('3 самых популярных героев среди про-игроков')
+    markup.add(btn1, btn2, btn3, btn4, btn5)
     global a
     global c
     if a is None:
         a = message.text
         c = ProTracker(a)
         bot.send_message(message.from_user.id, f'Ваш ник: {message.text}', reply_markup=markup)
-    if message.text == 'Поменять ник':
+    if message.text == 'Поменять ник (В разработке)':
         bot.send_message(message.from_user.id, 'Введите ник')
-        if message.text != a:
+        message.text = ''
+        while message.text == '':
+            pass
+        else:
             a = message.text
             c = ProTracker(a)
-        bot.send_message(message.from_user.id, f'Ваш ник успешно изменен на'
-                                               f' {message.text}',
-                         parse_mode='Markdown')
+            bot.send_message(message.from_user.id, f'Ваш ник успешно изменен на'
+                                                   f' {a}',
+                             parse_mode='Markdown')
     elif message.text == 'Статистика последних игр за 8 дней':
         bot.send_message(message.from_user.id, c.lastgames())
     elif message.text == 'Подробный разбор последних 3-х игр':
         bot.send_message(message.from_user.id, c.last3matches())
     elif message.text == 'Профиль на Dota2ProTracker':
         bot.send_message(message.from_user.id, c.l)
+    elif message.text == '3 самых популярных героев среди про-игроков':
+        bot.send_message(message.from_user.id, c.top_heroes())
 
     elif message.text == 'В разработке':
         bot.send_message(message.from_user.id,
@@ -176,6 +206,3 @@ def get_text_messages(message):
 
 
 bot.polling(none_stop=True, interval=0)
-# a = ProTracker('bzm')
-# print(a.lastgames())
-# a.last3matches()
