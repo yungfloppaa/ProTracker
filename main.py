@@ -152,15 +152,16 @@ class ProTracker:
         for i in range(3):
             results_all = str(soup.find_all(class_='twitch-streamer')[i])
             n = results_all.split()[5]
-            n = n[n.index('"') + 1: n.index('>') - 2]
+            n = n[n.index('"') + 1: n.index('>') - 1]
             f = results_all.split()[12]
             f = f[f.index('>') + 1: f.index('<')]
             a = results_all.split()[5]
             a = a[a.index('>') + 1: a.index('<')]
             topstreamers.append(f'Стример: {a}, имеет {f} ммр, Ссылка на твич: {n}')
+        print(topstreamers)
         return '\n'.join(topstreamers)
 
-
+ProTracker('bzm').topstreamers()
 bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
 a = None
 c = None
