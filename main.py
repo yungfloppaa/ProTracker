@@ -141,10 +141,24 @@ class ProTracker:
             game.append(str(games[i][16:20]))
 
         return (f'The Most Popular Heroes:\n'
-              f'{first} - {game[0]} ({winrrate[0]}) \n'
-              f'{second} - {game[1]} ({winrrate[1]}) \n'
-              f'{third} - {game[2]} ({winrrate[2]})')
+                f'{first} - {game[0]} ({winrrate[0]}) \n'
+                f'{second} - {game[1]} ({winrrate[1]}) \n'
+                f'{third} - {game[2]} ({winrrate[2]})')
 
+    def topstreamers(self):
+        r = requests.get('https://www.dota2protracker.com')
+        soup = b(r.text, 'html.parser')
+        topstreamers = []
+        for i in range(3):
+            results_all = str(soup.find_all(class_='twitch-streamer')[i])
+            n = results_all.split()[5]
+            n = n[n.index('"') + 1: n.index('>') - 2]
+            f = results_all.split()[12]
+            f = f[f.index('>') + 1: f.index('<')]
+            a = results_all.split()[5]
+            a = a[a.index('>') + 1: a.index('<')]
+            topstreamers.append(f'Стример: {a}, имеет {f} ммр, Ссылка на твич: {n}')
+        return '\n'.join(topstreamers)
 
 
 bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
@@ -171,7 +185,8 @@ def get_text_messages(message):
     btn3 = types.KeyboardButton('Поменять ник (В разработке)')
     btn4 = types.KeyboardButton('Профиль на Dota2ProTracker')
     btn5 = types.KeyboardButton('3 самых популярных героев среди про-игроков')
-    markup.add(btn1, btn2, btn3, btn4, btn5)
+    btn6 = types.KeyboardButton('3 хай-ммр стримера, которые ведут стрим')
+    markup.add(btn1, btn2, btn3, btn4, btn5, btn6)
     global a
     global c
     if a is None:
@@ -197,7 +212,8 @@ def get_text_messages(message):
         bot.send_message(message.from_user.id, c.l)
     elif message.text == '3 самых популярных героев среди про-игроков':
         bot.send_message(message.from_user.id, c.top_heroes())
-
+    elif message.text == '3 хай-ммр стримера, которые ведут стрим':
+        bot.send_message(message.from_user.id, c.topstreamers())
     elif message.text == 'В разработке':
         bot.send_message(message.from_user.id,
                          'В разработке',
