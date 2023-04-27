@@ -197,7 +197,6 @@ class ProTracker:
                f'{p}'
 
 
-print(ProTracker('bzm').guide('Muerta'))
 bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
 a = None
 c = None
@@ -208,9 +207,17 @@ d = None
 def start(message):
     global a, c
     a = c = None
-    bot.send_message(message.from_user.id, f"👋 Привет, {message.from_user.first_name}! Я твой бот "
-                                           f"по Dota 2", reply_markup=types.ReplyKeyboardRemove())
+    bot.send_photo(message.from_user.id, open('Hello.jpg', 'rb'), f"👋 Привет,"
+                                                                  f" {message.from_user.first_name}! Я "
+                                                                  f"твой бот "
+                                                                  f"по Dota 2",
+                   reply_markup=types.ReplyKeyboardRemove())
     bot.send_message(message.from_user.id, 'Введите ник что бы начать')
+
+
+@bot.message_handler(commands=['help'])
+def help(message):
+    bot.send_photo(message.from_user.id, open('Hello.jpg', 'rb'))
 
 
 @bot.message_handler(commands=['changenick'])
@@ -244,7 +251,14 @@ def get_text_messages(message):
         a = message.text
         d = message.text
         c = ProTracker(a)
-        bot.send_message(message.from_user.id, f'Ваш ник: {message.text}', reply_markup=markup)
+        try:
+            c.last3matches()
+        except IndexError:
+            bot.send_message(message.from_user.id, 'Игрока с таким ником нет на ProTracker, '
+                                                   'пожалуйста, поменяйте ник с помощью команды '
+                                                   '/changenick {ник}')
+        else:
+            bot.send_message(message.from_user.id, f'Ваш ник: {message.text}', reply_markup=markup)
     elif message.text == 'Статистика последних игр за 8 дней':
         bot.send_message(message.from_user.id, c.lastgames())
     elif message.text == '5 лучших игроков на данный момент':
@@ -258,7 +272,12 @@ def get_text_messages(message):
     elif message.text == '5 хай-ммр стримеров, которые ведут стрим':
         bot.send_message(message.from_user.id, c.topstreamers())
     else:
-        bot.send_message(message.from_user.id, c.guide(message.text))
+        try:
+            c.guide(message.text)
+        except IndexError:
+            bot.send_message(message.from_user.id, 'Имя героя введено некорректно')
+        else:
+            bot.send_message(message.from_user.id, c.guide(message.text))
     bot.send_message(message.from_user.id, 'Что вы хотите узнать? Можете также ввести ник героя, '
                                            'билд на которого хотите посмотреть.')
 
