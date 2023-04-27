@@ -241,6 +241,7 @@ bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
 a = None
 c = None
 d = None
+Fake = False
 
 
 @bot.message_handler(commands=['start'])
@@ -262,17 +263,19 @@ def help(message):
 
 @bot.message_handler(commands=['changenick'])
 def changenick(message):
-    global c, a, d
+    global c, a, d, Fake
     a = message.text[11:].strip()
     c = ProTracker(a)
     try:
         c.last3matches()
     except IndexError:
-        bot.send_message(message.from_user.id, f'Ошибка: игрока с ником {a} нет на ProTracker')
+        bot.send_message(message.from_user.id, f'Ошибка: игрока с ником {a} нет на ProTracker, '
+                                               f'ваш ник остался прежним.')
         a = d
         c = ProTracker(a)
     else:
         d = a
+        Fake = False
         bot.send_message(message.from_user.id, f'Ваш ник успешно изменен на {a}')
 
 
@@ -287,7 +290,7 @@ def get_text_messages(message):
     btn6 = types.KeyboardButton('5 хай-ммр стримеров, которые ведут стрим')
     btn7 = types.KeyboardButton('3 последних сыгранных паблика')
     markup.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7)
-    global a, c, d
+    global a, c, d, Fake
     if a is None:
         a = message.text
         d = message.text
@@ -297,17 +300,35 @@ def get_text_messages(message):
         except IndexError:
             bot.send_message(message.from_user.id, 'Игрока с таким ником нет на ProTracker, '
                                                    'пожалуйста, поменяйте ник с помощью команды '
-                                                   '/changenick {ник}')
+                                                   '/changenick {ник}', reply_markup=markup)
+            Fake = True
+
         else:
+            Fake = False
             bot.send_message(message.from_user.id, f'Ваш ник: {message.text}', reply_markup=markup)
     elif message.text == 'Статистика последних игр за 8 дней':
-        bot.send_message(message.from_user.id, c.lastgames())
+        if Fake is True:
+            bot.send_message(message.from_user.id, 'Игрока с таким ником нет на ProTracker, '
+                                                   'пожалуйста, поменяйте ник с помощью команды '
+                                                   '/changenick {ник}')
+        else:
+            bot.send_message(message.from_user.id, c.lastgames())
     elif message.text == '5 лучших игроков на данный момент':
         bot.send_message(message.from_user.id, c.topplayers())
     elif message.text == 'Подробный разбор последних 3-х игр':
-        bot.send_message(message.from_user.id, c.last3matches())
+        if Fake is True:
+            bot.send_message(message.from_user.id, 'Игрока с таким ником нет на ProTracker, '
+                                                   'пожалуйста, поменяйте ник с помощью команды '
+                                                   '/changenick {ник}')
+        else:
+            bot.send_message(message.from_user.id, c.last3matches())
     elif message.text == 'Профиль на Dota2ProTracker':
-        bot.send_message(message.from_user.id, c.l)
+        if Fake is True:
+            bot.send_message(message.from_user.id, 'Игрока с таким ником нет на ProTracker, '
+                                                   'пожалуйста, поменяйте ник с помощью команды '
+                                                   '/changenick {ник}')
+        else:
+            bot.send_message(message.from_user.id, c.l)
     elif message.text == '3 самых популярных героев среди про-игроков':
         bot.send_message(message.from_user.id, c.top_heroes())
     elif message.text == '5 хай-ммр стримеров, которые ведут стрим':
