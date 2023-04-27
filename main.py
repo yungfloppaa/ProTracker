@@ -149,7 +149,7 @@ class ProTracker:
         r = requests.get('https://www.dota2protracker.com')
         soup = b(r.text, 'html.parser')
         topstreamers = []
-        for i in range(3):
+        for i in range(5):
             results_all = str(soup.find_all(class_='twitch-streamer')[i])
             n = results_all.split()[5]
             n = n[n.index('"') + 1: n.index('>') - 1]
@@ -161,21 +161,49 @@ class ProTracker:
         print(topstreamers)
         return '\n'.join(topstreamers)
 
-ProTracker('bzm').topstreamers()
+    def topplayers(self):
+        r = requests.get('https://www.dota2protracker.com')
+        soup = b(r.text, 'html.parser')
+        topplayers = []
+        for i in range(5):
+            results_all = str(soup.find_all(class_='td-player')[i]).split()
+            a = results_all[4]
+            a = a[a.index('"') + 1: a.index('>') - 1]
+            topplayers.append(f'Топ {i + 1}: {a}')
+        return '\n'.join(topplayers)
+
+
+# ProTracker('bzm').topstreamers()
+print(ProTracker('bzm').topplayers())
 bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
 a = None
 c = None
+d = None
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    global a
-    global c
-    a = None
-    c = None
+    global a, c
+    a = c = None
     bot.send_message(message.from_user.id, f"👋 Привет, {message.from_user.first_name}! Я твой бот "
                                            f"по Dota 2", reply_markup=types.ReplyKeyboardRemove())
     bot.send_message(message.from_user.id, 'Введите ник что бы начать')
+
+
+@bot.message_handler(commands=['changenick'])
+def changenick(message):
+    global c, a, d
+    a = message.text[11:].strip()
+    c = ProTracker(a)
+    try:
+        c.last3matches()
+    except IndexError:
+        bot.send_message(message.from_user.id, f'Ошибка: игрока с ником {a} нет на ProTracker')
+        a = d
+        c = ProTracker(a)
+    else:
+        d = a
+        bot.send_message(message.from_user.id, f'Ваш ник успешно изменен на {a}')
 
 
 @bot.message_handler(content_types=['text'])
@@ -183,42 +211,29 @@ def get_text_messages(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton('Статистика последних игр за 8 дней')
     btn2 = types.KeyboardButton('Подробный разбор последних 3-х игр')
-    btn3 = types.KeyboardButton('Поменять ник (В разработке)')
+    btn3 = types.KeyboardButton('5 лучших игроков на данный момент')
     btn4 = types.KeyboardButton('Профиль на Dota2ProTracker')
     btn5 = types.KeyboardButton('3 самых популярных героев среди про-игроков')
-    btn6 = types.KeyboardButton('3 хай-ммр стримера, которые ведут стрим')
+    btn6 = types.KeyboardButton('5 хай-ммр стримеров, которые ведут стрим')
     markup.add(btn1, btn2, btn3, btn4, btn5, btn6)
-    global a
-    global c
+    global a, c, d
     if a is None:
         a = message.text
+        d = message.text
         c = ProTracker(a)
         bot.send_message(message.from_user.id, f'Ваш ник: {message.text}', reply_markup=markup)
-    if message.text == 'Поменять ник (В разработке)':
-        bot.send_message(message.from_user.id, 'Введите ник')
-        message.text = ''
-        while message.text == '':
-            pass
-        else:
-            a = message.text
-            c = ProTracker(a)
-            bot.send_message(message.from_user.id, f'Ваш ник успешно изменен на'
-                                                   f' {a}',
-                             parse_mode='Markdown')
     elif message.text == 'Статистика последних игр за 8 дней':
         bot.send_message(message.from_user.id, c.lastgames())
+    elif message.text == '5 лучших игроков на данный момент':
+        bot.send_message(message.from_user.id, c.topplayers())
     elif message.text == 'Подробный разбор последних 3-х игр':
         bot.send_message(message.from_user.id, c.last3matches())
     elif message.text == 'Профиль на Dota2ProTracker':
         bot.send_message(message.from_user.id, c.l)
     elif message.text == '3 самых популярных героев среди про-игроков':
         bot.send_message(message.from_user.id, c.top_heroes())
-    elif message.text == '3 хай-ммр стримера, которые ведут стрим':
+    elif message.text == '5 хай-ммр стримеров, которые ведут стрим':
         bot.send_message(message.from_user.id, c.topstreamers())
-    elif message.text == 'В разработке':
-        bot.send_message(message.from_user.id,
-                         'В разработке',
-                         parse_mode='Markdown')
     bot.send_message(message.from_user.id, 'Что вы хотите узнать?')
 
 
