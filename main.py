@@ -196,7 +196,47 @@ class ProTracker:
         return f'10 самых популярных предметов на героя {hero}: \n' \
                f'{p}'
 
+    def Recently_Finished_Pub_Matches(self):
+        r = requests.get('https://www.dota2protracker.com')
+        soup = b(r.text, 'html.parser')
+        row_0 = str(soup.find_all(class_='row-0')).strip('\n').split(' ')
+        row_0_players = []
+        row_1 = str(soup.find_all(class_='row-1')).strip('\n').split(' ')
+        row_1_players = []
+        row_2 = str(soup.find_all(class_='row-2')).strip('\n').split(' ')
+        row_2_players = []
+        durr = str(soup.find_all(class_='td-dur')[:3]).split(' ')
+        durraction_recently = []
+        for i in range(2, 9, 3):
+            durraction_recently.append(durr[i][18:23])
+        for el in row_0:
+            if 'href="/player/' in el:
+                row_0_players.append(str(el[14:].strip('"')))
+        for el in row_1:
+            if 'href="/player/' in el:
+                row_1_players.append(str(el[14:].strip('"')))
+        for el in row_2:
+            if 'href="/player/' in el:
+                row_2_players.append(str(el[14:].strip('"')))
+        mrs_recently = str(soup.find_all(class_='td-mmr')[:3]).split(',')
+        mmrs_recently = []
+        for el in mrs_recently:
+            mmrs_recently.append(str(el)[20:24])
+        return (f'Recently Finished Pub Matches:\n'
+                f'Players: {str(row_0_players)[1:-1]}\n'
+                f'Duraction: {durraction_recently[0]}\n'
+                f'Mmrs: {mmrs_recently[0]}\n'
+                f'-----------------------------\n'
+                f'Players: {str(row_1_players)[1:-1]}\n'
+                f'Duraction: {durraction_recently[1]}\n'
+                f'Mmrs: {mmrs_recently[1]}\n'
+                f'-----------------------------\n'
+                f'Players: {str(row_2_players)[1:-1]}\n'
+                f'Duraction: {durraction_recently[2]}\n'
+                f'Mmrs: {mmrs_recently[2]}\n')
 
+
+ProTracker('bzm').guide('Muerta')
 bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
 a = None
 c = None
@@ -245,7 +285,8 @@ def get_text_messages(message):
     btn4 = types.KeyboardButton('Профиль на Dota2ProTracker')
     btn5 = types.KeyboardButton('3 самых популярных героев среди про-игроков')
     btn6 = types.KeyboardButton('5 хай-ммр стримеров, которые ведут стрим')
-    markup.add(btn1, btn2, btn3, btn4, btn5, btn6)
+    btn7 = types.KeyboardButton('3 последних сыгранных паблика')
+    markup.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7)
     global a, c, d
     if a is None:
         a = message.text
@@ -271,6 +312,8 @@ def get_text_messages(message):
         bot.send_message(message.from_user.id, c.top_heroes())
     elif message.text == '5 хай-ммр стримеров, которые ведут стрим':
         bot.send_message(message.from_user.id, c.topstreamers())
+    elif message.text == '3 последних сыгранных паблика':
+        bot.send_message(message.from_user.id, c.Recently_Finished_Pub_Matches())
     else:
         try:
             c.guide(message.text)
