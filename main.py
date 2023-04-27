@@ -158,7 +158,6 @@ class ProTracker:
             a = results_all.split()[5]
             a = a[a.index('>') + 1: a.index('<')]
             topstreamers.append(f'Стример: {a}, имеет {f} ммр, Ссылка на твич: {n}')
-        print(topstreamers)
         return '\n'.join(topstreamers)
 
     def topplayers(self):
@@ -172,9 +171,33 @@ class ProTracker:
             topplayers.append(f'Топ {i + 1}: {a}')
         return '\n'.join(topplayers)
 
+    def guide(self, hero):
+        r = requests.get(f'https://www.dota2protracker.com/hero/{hero}')
+        soup = b(r.text, 'html.parser')
+        p = []
+        for i in range(10):
+            results_all = str(soup.find_all(class_='item-group')[i]).split()
+            a = results_all[6]
+            m = []
+            for i in range(len(results_all)):
+                if 'title=' in results_all[i]:
+                    if results_all[i].endswith('>'):
+                        m.append(results_all[i][7:-2])
+                    elif results_all[i + 1].endswith('>'):
+                        m.append(results_all[i][7:])
+                        m.append(results_all[i + 1][:-2])
+                    elif results_all[i + 2].endswith('>'):
+                        m.append(results_all[i][7:])
+                        m.append(results_all[i + 1])
+                        m.append(results_all[i + 2][:-2])
+                    p.append(f"{' '.join(m)} примерный тайминг: {a} минута")
+                    m = []
+        p = "\n".join(p)
+        return f'10 самых популярных предметов на героя {hero}: \n' \
+               f'{p}'
 
-# ProTracker('bzm').topstreamers()
-print(ProTracker('bzm').topplayers())
+
+print(ProTracker('bzm').guide('Muerta'))
 bot = telebot.TeleBot('6031419131:AAGJIz5ytYr-FzjbtuQkQa24TXidHHktrzs')
 a = None
 c = None
@@ -234,7 +257,10 @@ def get_text_messages(message):
         bot.send_message(message.from_user.id, c.top_heroes())
     elif message.text == '5 хай-ммр стримеров, которые ведут стрим':
         bot.send_message(message.from_user.id, c.topstreamers())
-    bot.send_message(message.from_user.id, 'Что вы хотите узнать?')
+    else:
+        bot.send_message(message.from_user.id, c.guide(message.text))
+    bot.send_message(message.from_user.id, 'Что вы хотите узнать? Можете также ввести ник героя, '
+                                           'билд на которого хотите посмотреть.')
 
 
 bot.polling(none_stop=True, interval=0)
